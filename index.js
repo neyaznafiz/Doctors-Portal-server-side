@@ -49,11 +49,24 @@ async function run() {
             res.send(services)
         })
 
-        app.get('/allusers', async (req, res) => {
+        app.get('/allusers', verifyJWT, async (req, res) => {
             const users = await usersCollection.find().toArray()
             res.send(users)
         })
 
+        // make admin api
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email
+            const filter = { email: email }
+            const updatedDoc = {
+                $set: { role: 'admin' },
+            }
+            const result = await usersCollection.updateOne(filter, updatedDoc)
+            res.send(result)
+        })
+
+
+        // user put api 
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email
             const user = req.body
