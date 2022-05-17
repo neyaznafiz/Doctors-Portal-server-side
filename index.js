@@ -52,7 +52,7 @@ async function run() {
             if (requesterAccount.role === 'admin') {
                 next()
             }
-            else{
+            else {
                 res.status(403).send({ message: 'Forbidden Access' })
             }
         }
@@ -89,12 +89,12 @@ async function run() {
             // const requesterAccount = await usersCollection.findOne({ email: requester })
 
             // if (requesterAccount.role === 'admin') {
-                const filter = { email: email }
-                const updatedDoc = {
-                    $set: { role: 'admin' },
-                }
-                const result = await usersCollection.updateOne(filter, updatedDoc)
-                res.send(result)
+            const filter = { email: email }
+            const updatedDoc = {
+                $set: { role: 'admin' },
+            }
+            const result = await usersCollection.updateOne(filter, updatedDoc)
+            res.send(result)
             // }
             // else {
             //     res.status(403).send({ message: 'Forbidden Access' })
@@ -182,12 +182,19 @@ async function run() {
             return res.send({ success: true, result })
         })
 
+        // get doctors api
+        app.get('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
+            const doctors = await doctorsCollection.find().toArray()
+            res.send(doctors)
+        })
+
         // add doctor api
         app.post('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
             const doctor = req.body
             const result = await doctorsCollection.insertOne(doctor)
             res.send(result)
         })
+
 
     }
     finally { }
