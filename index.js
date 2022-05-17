@@ -42,10 +42,16 @@ async function run() {
         const serviceCollection = client.db('doctorst_portal').collection('services')
         const bookingCollection = client.db('doctorst_portal').collection('bookings')
         const usersCollection = client.db('doctorst_portal').collection('users')
+        const doctorsCollection = client.db('doctorst_portal').collection('doctors')
 
+        // app.get('/service', async (req, res) => {
+        //     const query = {}
+        //     const services = await serviceCollection.find(query).toArray()
+        //     res.send(services)
+        // })
         app.get('/service', async (req, res) => {
             const query = {}
-            const services = await serviceCollection.find(query).toArray()
+            const services = await serviceCollection.find(query).project({ name: 1 }).toArray()
             res.send(services)
         })
 
@@ -57,9 +63,9 @@ async function run() {
         // find admin by email api
         app.get('/admin/:email', async (req, res) => {
             const email = req.params.email
-            const user = await usersCollection.findOne({email: email})
+            const user = await usersCollection.findOne({ email: email })
             const isAdmin = user.role === 'admin'
-            res.send({admin: isAdmin})
+            res.send({ admin: isAdmin })
         })
 
         // make admin api
@@ -160,6 +166,12 @@ async function run() {
             }
             const result = await bookingCollection.insertOne(booking)
             return res.send({ success: true, result })
+        })
+
+        app.post('/doctor', async (req, res) => {
+            const doctor = req.body
+            const result = await doctorsCollection.insertOne(doctor)
+            res.send(result)
         })
 
     }
