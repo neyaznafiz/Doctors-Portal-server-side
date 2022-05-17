@@ -17,7 +17,7 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
-// jwt function
+// jwt verify function
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization
     if (!authHeader) {
@@ -44,6 +44,20 @@ async function run() {
         const usersCollection = client.db('doctorst_portal').collection('users')
         const doctorsCollection = client.db('doctorst_portal').collection('doctors')
 
+        // verify admin function
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email
+            const requesterAccount = await usersCollection.findOne({ email: requester })
+
+            if (requesterAccount.role === 'admin') {
+                next()
+            }
+            else{
+                res.status(403).send({ message: 'Forbidden Access' })
+            }
+        }
+
+
         // app.get('/service', async (req, res) => {
         //     const query = {}
         //     const services = await serviceCollection.find(query).toArray()
@@ -69,22 +83,22 @@ async function run() {
         })
 
         // make admin api
-        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
             const email = req.params.email
-            const requester = req.decoded.email
-            const requesterAccount = await usersCollection.findOne({ email: requester })
+            // const requester = req.decoded.email
+            // const requesterAccount = await usersCollection.findOne({ email: requester })
 
-            if (requesterAccount.role === 'admin') {
+            // if (requesterAccount.role === 'admin') {
                 const filter = { email: email }
                 const updatedDoc = {
                     $set: { role: 'admin' },
                 }
                 const result = await usersCollection.updateOne(filter, updatedDoc)
                 res.send(result)
-            }
-            else {
-                res.status(403).send({ message: 'Forbidden Access' })
-            }
+            // }
+            // else {
+            //     res.status(403).send({ message: 'Forbidden Access' })
+            // }
         })
 
 
@@ -168,7 +182,8 @@ async function run() {
             return res.send({ success: true, result })
         })
 
-        app.post('/doctor', async (req, res) => {
+        // add doctor api
+        app.post('/doctor', verifyJWT, verifyAdmin, async (req, res) => {
             const doctor = req.body
             const result = await doctorsCollection.insertOne(doctor)
             res.send(result)
